@@ -5,7 +5,12 @@ import admin from "firebase-admin";
 import serviceAccount from "./firebaseservicekey.json" assert { type: "json" };
 import { auth } from "./firebaseConfig.js";
 import multer from "multer";
-import {getStorage,ref,uploadBytesResumable,getDownloadURL} from 'firebase/storage'
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 
 const restrictedWords = ["bc", "mc", "dog", "rat", "cat"];
 const app = express();
@@ -71,7 +76,7 @@ app.route("/studentsignup").post((req, res) => {
       name,
       department,
       rg,
-      phone
+      phone,
     })
 
     .then(() => {
@@ -158,11 +163,8 @@ app.route("/getgroups/:uid").get((req, res) => {
 
 //send message
 app.route("/sendmessage").post((req, res) => {
-  const { sender, receiver, message,file } = req.body;
+  const { sender, receiver, message, file } = req.body;
   const id = Math.random().toString(36).substring(7);
-
-  
-
 
   if (restrictedWords.some((word) => message.includes(word))) {
     return res.send({
@@ -171,7 +173,7 @@ app.route("/sendmessage").post((req, res) => {
     });
   }
 
-  console.log(file)
+  console.log(file);
 
   //
   const userRef = db.collection("messages").doc(id);
@@ -182,7 +184,6 @@ app.route("/sendmessage").post((req, res) => {
         datetime: admin.firestore.FieldValue.serverTimestamp(),
         sender: sender,
         receiver: receiver,
-
       },
       { merge: true }
     )
@@ -241,7 +242,7 @@ app.route("/facultysignup").post((req, res) => {
       email,
       name,
       department,
-      phone
+      phone,
     })
     .then(() => {
       console.log("Document successfully written!");
@@ -607,33 +608,63 @@ app.get("/getRole/:uid", (req, res) => {
   });
 });
 
-app.post('/editProfile',(req,res)=>{
-  const {uid,email,password, phoneNumber} = req.body
+app.post("/editProfile", (req, res) => {
+  const { uid, email, password, phoneNumber } = req.body;
   console.log(req.body);
-  let userRef = db.collection('students').doc(uid);
+  let userRef = db.collection("students").doc(uid);
 
-  if(userRef === null){
-    userRef = db.collection('faculty').doc(uid);
+  if (userRef === null) {
+    userRef = db.collection("faculty").doc(uid);
   }
   const updObj = {
-    email:email,
-    phone:phoneNumber,
-  }
+    email: email,
+    phone: phoneNumber,
+  };
 
-  userRef.update(updObj)
+  userRef
+    .update(updObj)
 
-  .then(() => {
-    console.log("Document successfully updated!");
-    res.send({ message: "Profile updated successfully", status: 200 });
-  })
+    .then(() => {
+      console.log("Document successfully updated!");
+      res.send({ message: "Profile updated successfully", status: 200 });
+    })
 
-  .catch((error) => {
-    // The document probably doesn't exist.
-    console.error("Error updating document: ", error);
-    res.send({ message: "Error updating profile", status: 404 });
+    .catch((error) => {
+      // The document probably doesn't exist.
+      console.error("Error updating document: ", error);
+      res.send({ message: "Error updating profile", status: 404 });
+    });
+});
+
+app.post("/block", (req, res) => {
+  const { sender, receiver } = req.body;
+
+  const dbref = db.collection("blocked");
+
+  dbref.find({ sender: sender, receiver: receiver }).toArray((err, result) => {
+    if (err) throw err;
+    if (result.length > 0) {
+      return res.send({ message: "Already blocked", status: 404 });
+    } else {
+      dbref.insertOne({ sender: sender, receiver: receiver }, (err, result) => {
+        if (err) throw err;
+        return res.send({ message: "Blocked successfully", status: 200 });
+      });
+    }
   });
+});
 
+app.post('/getBlockedStatus',(req,res)=>{
+  const {sender,receiver} = req.body;
 
+  const dbref = db.collection('blocked');
 
-
+  dbref.find({sender:sender,receiver:receiver}).toArray((err,result)=>{
+    if(err) throw err;
+    if(result.length>0){
+      return res.send({message:true,status:200});
+    }else{
+      return res.send({message:false,status:404});
+    }
+  })  
 })

@@ -21,6 +21,7 @@ const WhatsAppChatScreen = ({ route }) => {
   const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
   const [to, setTo] = useState(0);
+  const [isNew, setIsNew] = useState(false);
   const user = { name: route.params.name }; // Replace with actual user data
 
   const [chatData, setChatData] = useState([]);
@@ -53,6 +54,9 @@ const WhatsAppChatScreen = ({ route }) => {
         console.log(response.data);
 
         let msgs = response.data;
+        if (msgs.length === 0) {
+          setIsNew(true);
+        }
 
         const sortedMessages = msgs.sort((a, b) => {
           const aTime =
@@ -78,6 +82,36 @@ const WhatsAppChatScreen = ({ route }) => {
       });
   };
 
+
+  const block  = async () => {
+    const { toid } = route.params;
+    console.log(toid);
+
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: `http://${manifest.debuggerHost
+        .split(":")
+        .shift()}:3000/block`,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: {
+        sender: auth.currentUser.uid,
+        receiver: toid,
+      },
+    };
+
+    axios
+      .request(config)
+      .then((response) => {
+        getOurMessages();
+        setMessage("");
+      })
+      .catch((error) => {
+        alert(error.message);
+      });
+  }
   useEffect(() => {
     getOurMessages();
   }, []);
@@ -167,6 +201,36 @@ const WhatsAppChatScreen = ({ route }) => {
           </View>
         )}
       />
+      {isNew && (
+        <TouchableOpacity
+          onPress={() => handleSend()}
+          style={[
+            styles.sendIconContainer,
+            {
+              backgroundColor: "red",
+              width: 100,
+              height: 40,
+              borderRadius: 10,
+              alignSelf: "center",
+              justifyContent: "center",
+              alignItems: "center",
+              marginBottom: 10,
+            },
+          ]}
+        >
+          <Text
+            style={{
+              color: "white",
+              fontSize: 20,
+              fontWeight: "bold",
+              textAlign: "center",
+              marginTop: 5,
+            }}
+          >
+            Block
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* Message input bar */}
       <View style={styles.messageBar}>
