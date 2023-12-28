@@ -11,18 +11,21 @@ import {
 import { FontAwesome } from "@expo/vector-icons"; // Import icons from Expo package
 import { firestore } from "../firebaseConfig";
 import { auth } from "../firebaseConfig";
+import * as DocumentPicker from "expo-document-picker";
 import axios from "axios";
+
+import { ActivityIndicator } from "react-native-paper";
 
 import { useNavigation } from "@react-navigation/native";
 import Constants from "expo-constants";
 
-const GroupWhatsAppChatScreen = ({route}) => {
+const GroupWhatsAppChatScreen = ({ route }) => {
   const { manifest } = Constants;
-  const {grpID,name} = route.params;
+  const { grpID, name } = route.params;
   const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
-  const [to, setTo] = useState(0);// Replace with actual user data
-
+  const [to, setTo] = useState(0); // Replace with actual user data
+  const [sending, setSending] = useState(false);
   const [chatData, setChatData] = useState([]);
   const navigation = useNavigation();
 
@@ -30,7 +33,9 @@ const GroupWhatsAppChatScreen = ({route}) => {
     let config = {
       method: "post",
       maxBodyLength: Infinity,
-      url: `http://${manifest.debuggerHost.split(':').shift()}:3000/getgroupmessages`,
+      url: `http://${manifest.debuggerHost
+        .split(":")
+        .shift()}:3000/getgroupmessages`,
       headers: {
         "Content-Type": "application/json",
       },
@@ -38,34 +43,35 @@ const GroupWhatsAppChatScreen = ({route}) => {
         group: grpID,
       },
     };
-     
+
     axios
       .request(config)
       .then((response) => {
+        setSending(false);
         console.log(response.data);
 
         let msgs = response.data;
 
         const sortedMessages = msgs.sort((a, b) => {
-          const aTime = a.datetime._seconds * 1000 + a.datetime._nanoseconds / 1000000;
-          const bTime = b.datetime._seconds * 1000 + b.datetime._nanoseconds / 1000000;
+          const aTime =
+            a.datetime._seconds * 1000 + a.datetime._nanoseconds / 1000000;
+          const bTime =
+            b.datetime._seconds * 1000 + b.datetime._nanoseconds / 1000000;
           return aTime - bTime;
         });
 
         sortedMessages.forEach((element) => {
-
-          
           if (element.sender === auth.currentUser.uid) {
             element.recep = true;
           } else {
             element.recep = false;
           }
-        
         });
 
         setChatData(sortedMessages);
       })
       .catch((error) => {
+        setSending(false);
         console.log(error);
       });
   };
@@ -75,12 +81,17 @@ const GroupWhatsAppChatScreen = ({route}) => {
   }, []);
 
   const handleSend = async () => {
-   
+    if (message === "") {
+      alert("Please enter a message");
+      return;
+    }
     console.log(grpID);
     let config = {
       method: "post",
       maxBodyLength: Infinity,
-      url: `http://${manifest.debuggerHost.split(':').shift()}:3000/sendgroupmessages`,
+      url: `http://${manifest.debuggerHost
+        .split(":")
+        .shift()}:3000/sendgroupmessages`,
       headers: {
         "Content-Type": "application/json",
       },
@@ -90,22 +101,34 @@ const GroupWhatsAppChatScreen = ({route}) => {
         group: grpID,
       },
     };
+    setSending(true);
 
+    setMessage("");
     axios
       .request(config)
       .then((response) => {
-        if (response.data.status === 200) {
-          getOurMessages();
-          setMessage("");
-        }
+        getOurMessages();
+        setMessage("");
+        setFile(null);
       })
       .catch((error) => {
-        console.log(error);
+        setSending(false);
+        if (error.message === "Request failed with status code 400") {
+          alert("Your message contains restricted words");
+        }
       });
   };
 
   const handleFileSelect = () => {
-    // Handle file selection logic here
+    DocumentPicker.getDocumentAsync({
+      type: "application/*",
+      copyToCacheDirectory: true,
+    })
+      .then((res) => {
+        console.log(res);
+        setFile(res.uri);
+      })
+      .catch((err) => console.log(err));
   };
 
   return (
@@ -128,7 +151,15 @@ const GroupWhatsAppChatScreen = ({route}) => {
             style={styles.profileImage}
           />
         </View>
-        <Text style={styles.headerTitle}>{name}</Text>
+        <Text
+          onPress={() => {
+            console.log("djeij");
+            navigation.navigate("GroupProfile", { grpID: grpID, name: name });
+          }}
+          style={styles.headerTitle}
+        >
+          {name}
+        </Text>
       </View>
 
       {/* Chat messages */}
@@ -147,12 +178,29 @@ const GroupWhatsAppChatScreen = ({route}) => {
           >
             {/* add name to the chat bubble
              */}
-            <Text style={{ 
-              fontSize: 16,
-              fontWeight: "bold",
-              color: "#25d366",
-              marginLeft: 10,
-             }}>{item.senderName}</Text>
+            <TouchableOpacity
+              onPress={() => {
+                console.log(item);
+                navigation.navigate("WhatsAppChat", {
+                  navigation: navigation,
+                  toid: item.sender,
+                  name: item.senderName,
+                });
+
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: "bold",
+                  color: "#25d366",
+                  marginLeft: 10,
+                }}
+              >
+                {item.senderName}
+              </Text>
+            </TouchableOpacity>
+
             <Text style={styles.chatText}>{item.message}</Text>
           </View>
         )}
@@ -177,6 +225,14 @@ const GroupWhatsAppChatScreen = ({route}) => {
           onChangeText={setMessage}
           placeholder="Type a message..."
         />
+        {sending && (
+          <ActivityIndicator
+            size="small"
+            color="#25d366"
+            style={styles.sendIconContainer}
+          />
+        )}
+
         <TouchableOpacity
           onPress={() => handleSend()}
           style={styles.sendIconContainer}

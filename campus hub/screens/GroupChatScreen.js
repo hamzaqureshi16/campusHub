@@ -62,23 +62,7 @@ const GroupChatScreen = () => {
   
 
 
-  // Placeholder data for chat messages
-  const chatData = [
-    {
-      id: '1',
-      name: 'Civil Department',
-      message: 'Hi, how are you?',
-      profileImage: 'https://th.bing.com/th/id/R.bc9993d6b4ffc40622dcea75acf6c6dd?rik=w01gHU3pXz79Cg&riu=http%3a%2f%2f3.bp.blogspot.com%2f-Tfz6G_zsZkc%2fUhhnZ4aGwkI%2fAAAAAAAAEtk%2fHplbqw1xr_Y%2fs1600%2fa%2b(17).jpg&ehk=obAySeuTCDrB49SvrzOhcc%2bXxfIAxWqCd%2fwt196xX8k%3d&risl=&pid=ImgRaw&r=0',
-    },
-    {
-      id: '2',
-      name: 'Software Department',
-      message: 'Hello!',
-      profileImage: 'https://th.bing.com/th/id/R.bc9993d6b4ffc40622dcea75acf6c6dd?rik=w01gHU3pXz79Cg&riu=http%3a%2f%2f3.bp.blogspot.com%2f-Tfz6G_zsZkc%2fUhhnZ4aGwkI%2fAAAAAAAAEtk%2fHplbqw1xr_Y%2fs1600%2fa%2b(17).jpg&ehk=obAySeuTCDrB49SvrzOhcc%2bXxfIAxWqCd%2fwt196xX8k%3d&risl=&pid=ImgRaw&r=0',
-    },
-    // Add more chat messages here
-  ];
-
+ 
   return (
     <View style={{ flex: 1, backgroundColor: '#F5F5F5', marginTop: 50 }}>
       <GestureHandlerRootView style={{ flex: 1, width: '100%' }}>

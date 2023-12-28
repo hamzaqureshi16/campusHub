@@ -39,6 +39,7 @@ const BlogScreen = () => {
     await axios
       .get(`http://${manifest.debuggerHost.split(":").shift()}:3000/blogs`)
       .then((res) => {
+        console.log(res.data)
         setBlogs(res.data);
       })
       .catch((err) => console.log(err));
@@ -72,13 +73,17 @@ const BlogScreen = () => {
   ];
 
   const renderItem = ({ item }) => (
-    <View style={styles.blogItem}>
+    <TouchableOpacity onPress={()=>{
+      navigation.navigate('ReadBlog', {id: item.id})
+    }} style={styles.blogItem}>
       <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.blogImage} />
       <View style={styles.blogInfo}>
         <Text style={styles.blogTitle}>{item.title}</Text>
         <Text style={styles.blogDescription}>{item.content}</Text>
+        
+
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

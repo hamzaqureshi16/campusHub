@@ -15,7 +15,7 @@ const ChatScreen = ({route}) => {
   const navigate = useNavigation();
   const [users, setUsers] = useState([]);
 
-   
+  const navigation = useNavigation();
 
 
   const getAllUsers = async () => {
@@ -38,8 +38,7 @@ const ChatScreen = ({route}) => {
     getAllUsers()    
   }, [])
 
-  useEffect(() => {console.log(users)},[users])
-
+  
 
   // Placeholder data for chat messages
   

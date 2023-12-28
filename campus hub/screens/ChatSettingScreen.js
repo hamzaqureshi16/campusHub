@@ -9,15 +9,28 @@ import { arrayUnion } from 'firebase/firestore';
 
 
 const ChatSettingsScreen = () => {
+
   const { manifest } = Constants;
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [email, setEmail] = useState(auth.currentUser.email);
   const [password, setPassword] = useState('********'); // Displayed as asterisks for security
-  const [phoneNumber, setPhoneNumber] = useState('123-456-7890');
+  const [phoneNumber, setPhoneNumber] = useState('1234567890');
   const [editableEmail, setEditableEmail] = useState(false);
   const [editablePassword, setEditablePassword] = useState(false);
   const [editablePhoneNumber, setEditablePhoneNumber] = useState(false);
+
+  const allowOnlyNumbers = (text) => {
+    // Allow only numbers to be entered into phone number field
+    const regex = /^[0-9]+$/;
+    if (regex.test(text)) {
+      setPhoneNumber(text);
+    }
+    else{
+      alert("Enter only numbers in the phone number field");
+    }
+  };
+
 
   const handleNotificationsToggle = () => {
     setNotificationsEnabled(!notificationsEnabled);
@@ -150,7 +163,7 @@ const ChatSettingsScreen = () => {
             <TextInput
               style={styles.input}
               value={phoneNumber}
-              onChangeText={setPhoneNumber}
+              onChangeText={allowOnlyNumbers}
             />
             <TouchableOpacity onPress={savePhoneNumberChanges}>
               <Text style={styles.saveButton}>Save</Text>

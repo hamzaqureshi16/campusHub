@@ -33,6 +33,14 @@ const BottomNavigationBar = ({ activeTab }) => {
       </TouchableOpacity>
 
       <TouchableOpacity
+        style={[styles.tab, activeTab === 'Notifications' && styles.activeTab]}
+        onPress={()=>navigate.navigate('Notifications')}
+      >
+        <FontAwesome name="bell" size={24} color={activeTab === 'Notifications' ? '#25d366' : 'gray'} />
+        <Text style={activeTab === 'Notifications' ? styles.activeTabText : styles.tabText}>Notifications</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         style={[styles.tab, activeTab === 'Settings' && styles.activeTab]}
         onPress={()=>navigate.navigate('ChatSettings')}
       >

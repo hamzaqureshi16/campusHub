@@ -161,26 +161,32 @@ app.route("/getgroups/:uid").get((req, res) => {
     });
 });
 
+const filter = (message) => {
+  const restrictedWords = ["dog", "badword", "anotherbadword"]; // Add your restricted words here
+  let censoredMessage = message;
+
+  restrictedWords.forEach((word) => {
+    const regexPattern = new RegExp(`\\b${word}\\b`, "gi");
+    const asterisks = "*".repeat(word.length);
+    censoredMessage = censoredMessage.replace(regexPattern, asterisks);
+  });
+
+  return censoredMessage;
+};
+
 //send message
 app.route("/sendmessage").post((req, res) => {
   const { sender, receiver, message, file } = req.body;
   const id = Math.random().toString(36).substring(7);
 
-  if (restrictedWords.some((word) => message.includes(word))) {
-    return res.send({
-      message: "Message contains restricted words",
-      status: 404,
-    });
-  }
-
-  console.log(file);
+  const censoredMessage = filter(message);
 
   //
   const userRef = db.collection("messages").doc(id);
   userRef
     .set(
       {
-        message: message,
+        message: censoredMessage,
         datetime: admin.firestore.FieldValue.serverTimestamp(),
         sender: sender,
         receiver: receiver,
@@ -188,41 +194,83 @@ app.route("/sendmessage").post((req, res) => {
       { merge: true }
     )
     .then(() => {
-      console.log("Document successfully written!");
       const userRef = db.collection("notifications").doc(id);
       let name = "";
-      let senderRef = db.collection("faculty").doc(sender);
-      if (senderRef == null) {
-        senderRef = db.collection("students").doc(sender);
-      }
 
-      senderRef.get().then((doc) => {
-        if (doc.exists) {
-          name = doc.data().name;
-          console.log(name);
-          userRef
-            .set(
-              {
-                message: `${name} sent you a message`,
-                datetime: admin.firestore.FieldValue.serverTimestamp(),
-                sender: sender,
-                receiver: receiver,
-              },
-              { merge: true }
-            )
-            .then(() => {
-              console.log("Document successfully written!");
-              res.send({ message: "Message sent successfully", status: 200 });
-            })
-            .catch((error) => {
-              console.error("Error writing document: ", error);
-              res.send({ message: "Error sending message", status: 404 });
-            });
-        } else {
-          // doc.data() will be undefined in this case
-          console.log("No such document!");
-        }
-      });
+      db.collection("faculty")
+        .doc(sender)
+        .get()
+        .then((doc) => {
+          if (doc.exists) {
+            name = doc.data().name;
+            console.log(name);
+            userRef
+              .set(
+                {
+                  message: `${name} sent you a message`,
+                  datetime: admin.firestore.FieldValue.serverTimestamp(),
+                  sender: sender,
+                  receiver: receiver,
+                },
+                { merge: true }
+              )
+              .then(() => {
+                console.log("Document successfully written!");
+                return res.send({
+                  message: "Message sent successfully",
+                  status: 200,
+                });
+              })
+              .catch((error) => {
+                console.error("Error writing document: ", error);
+                return res.send({
+                  message: "Error sending message",
+                  status: 404,
+                });
+              });
+          } else {
+            db.collection("students")
+              .doc(sender)
+              .get()
+              .then((doc) => {
+                if (doc.exists) {
+                  name = doc.data().name;
+                  console.log(name);
+                  userRef
+                    .set(
+                      {
+                        message: `${name} sent you a message`,
+                        datetime: admin.firestore.FieldValue.serverTimestamp(),
+                        sender: sender,
+                        receiver: receiver,
+                      },
+                      { merge: true }
+                    )
+                    .then(() => {
+                      console.log("Document successfully written!");
+                      return res.send({
+                        message: "Message sent successfully",
+                        status: 200,
+                      });
+                    })
+                    .catch((error) => {
+                      console.error("Error writing document: ", error);
+                      return res.send({
+                        message: "Error sending message",
+                        status: 404,
+                      });
+                    });
+                } else {
+                  // doc.data() will be undefined in this case
+                  console.log("No such document! brosk");
+                  return res.status(200).send({ message: "" });
+                }
+              })
+              .catch((err) => {
+                console.log("Error getting documents", err);
+              });
+          }
+        });
     })
     .catch((error) => {
       console.error("Error writing document: ", error);
@@ -309,12 +357,7 @@ app.route("/sendgroupmessages").post((req, res) => {
   const { group, sender, message, senderName } = req.body;
   const id = Math.random().toString(36).substring(7);
 
-  if (restrictedWords.some((word) => message.includes(word))) {
-    return res.send({
-      message: "Message contains restricted words",
-      status: 404,
-    });
-  }
+  const censoredMessage = filter(message);
 
   //get name of user using sender wwhich is uid
   const userRef = db.collection("faculty").doc(sender);
@@ -329,7 +372,7 @@ app.route("/sendgroupmessages").post((req, res) => {
         userRef
           .set(
             {
-              message: message,
+              message: censoredMessage,
               datetime: admin.firestore.FieldValue.serverTimestamp(),
               sender: sender,
               group: group,
@@ -389,7 +432,7 @@ app.route("/sendgroupmessages").post((req, res) => {
               userRef
                 .set(
                   {
-                    message: message,
+                    message: censoredMessage,
                     datetime: admin.firestore.FieldValue.serverTimestamp(),
                     sender: sender,
                     group: group,
@@ -398,13 +441,27 @@ app.route("/sendgroupmessages").post((req, res) => {
                   { merge: true }
                 )
                 .then(() => {
+                  const groupRef = db.collection("groups");
+                  let groupData = {};
+                  //where id == group
+                  groupRef
+                    .where("id", "==", group)
+                    .get()
+                    .then((snapshot) => {
+                      snapshot.forEach((doc) => {
+                        groupData = doc.data();
+                      });
+                    });
+
+                  const name = groupData.name;
+
                   console.log("Document successfully written!");
                   //create notification
                   const userRef = db.collection("notifications").doc(id);
                   userRef
                     .set(
                       {
-                        message: `${name} sent a message in ${group}`,
+                        message: `${name} sent a message in ${name}`,
                         datetime: admin.firestore.FieldValue.serverTimestamp(),
                         sender: sender,
                         receiver: group,
@@ -468,7 +525,6 @@ app.route("/getgroupmessages").post((req, res) => {
 
 app.route("/getmessages").post((req, res) => {
   const { sender, receiver } = req.body;
-  console.log(req.body);
   const userRef = db.collection("messages");
   let messages = [];
   userRef
@@ -492,7 +548,7 @@ app.route("/getmessages").post((req, res) => {
       snapshot.forEach((doc) => {
         messages.push(doc.data());
       });
-      res.send(messages);
+      return res.send(messages);
     })
     .catch((err) => {
       console.log("Error getting documents", err);
@@ -524,14 +580,14 @@ app.post("/addBlog", (req, res) => {
     });
 });
 
-app.get("/blogs", (req, res) => {
+app.get("/blogs", (_, res) => {
   const userRef = db.collection("blogs");
   let blogs = [];
   userRef
     .get()
     .then((snapshot) => {
       snapshot.forEach((doc) => {
-        blogs.push(doc.data());
+        blogs.push({ id: doc.id, ...doc.data() });
       });
       res.status(200).send(blogs);
     })
@@ -541,55 +597,23 @@ app.get("/blogs", (req, res) => {
 });
 
 app.get("/notifications/:uid", (req, res) => {
-  const uid = req.params.uid;
-  const userRef = db.collection("notifications");
+  // const uid = req.params.uid;
+  const notificationRef = db.collection("notifications");
   let notifications = [];
-  userRef
-    .where("sender", "==", uid)
+
+  //get all notifications
+  notificationRef
     .get()
     .then((snapshot) => {
       snapshot.forEach((doc) => {
         notifications.push(doc.data());
       });
+      console.log(notifications);
+      return res.status(200).send(notifications);
     })
     .catch((err) => {
       console.log("Error getting documents", err);
     });
-
-  //get users dept
-  let userRef2 = db.collection("faculty").doc(uid);
-  if (userRef2 == null) {
-    userRef2 = db.collection("students").doc(uid);
-  }
-
-  let dept = "";
-  userRef2
-    .get()
-    .then((doc) => {
-      if (doc.exists) {
-        dept = doc.data().department;
-        console.log(dept);
-        userRef
-          .where("receiver", "==", dept)
-          .get()
-          .then((snapshot) => {
-            snapshot.forEach((doc) => {
-              notifications.push(doc.data());
-            });
-          })
-          .catch((err) => {
-            console.log("Error getting documents", err);
-          });
-      } else {
-        // doc.data() will be undefined in this case
-        console.log("No such document!");
-      }
-    })
-    .catch((err) => {
-      console.log("Error getting documents", err);
-    });
-  console.log(notifications);
-  res.send(notifications);
 });
 
 app.get("/getRole/:uid", (req, res) => {
@@ -637,34 +661,95 @@ app.post("/editProfile", (req, res) => {
 });
 
 app.post("/block", (req, res) => {
-  const { sender, receiver } = req.body;
+  const { blocker, blocked } = req.body;
+  const id = Math.random().toString(36).substring(7);
+  const userRef = db.collection("blocked").doc(id);
+
+  userRef
+    .set({
+      blocker: blocker,
+      blocked: blocked,
+    })
+
+    .then(() => {
+      console.log("Document successfully written!");
+      res.send({ message: "User blocked successfully", status: 200 });
+    })
+
+    .catch((error) => {
+      console.error("Error writing document: ", error);
+      res.send({ message: "Error blocking user", status: 404 });
+    });
+});
+
+app.post("/getBlockedStatus", (req, res) => {
+  const { blocker, blocked } = req.body;
 
   const dbref = db.collection("blocked");
 
-  dbref.find({ sender: sender, receiver: receiver }).toArray((err, result) => {
-    if (err) throw err;
-    if (result.length > 0) {
-      return res.send({ message: "Already blocked", status: 404 });
+  dbref
+    .where("blocker", "==", blocker)
+    .where("blocked", "==", blocked)
+    .get()
+    .then((snapshot) => {
+      if (snapshot.empty) {
+        console.log("No matching documents.");
+        return res.send({ message: false, status: 200 });
+      } else {
+        return res.send({ message: true, blocker: blocker, status: 200 });
+      }
+    })
+    .catch((err) => {
+      console.log("Error getting documents", err);
+    });
+});
+
+app.get("/getBlog/:id", (req, res) => {
+  console.log(req.params.id);
+  const id = req.params.id;
+  const userRef = db.collection("blogs").doc(id);
+  let blog = {};
+
+  userRef.get().then((doc) => {
+    if (doc.exists) {
+      blog = doc.data();
+      return res.send({ blog: blog, status: 200 });
     } else {
-      dbref.insertOne({ sender: sender, receiver: receiver }, (err, result) => {
-        if (err) throw err;
-        return res.send({ message: "Blocked successfully", status: 200 });
-      });
+      // doc.data() will be undefined in this case
+      console.log("No such document!");
+      return res.send({ blog: blog, status: 404 });
     }
   });
 });
 
-app.post('/getBlockedStatus',(req,res)=>{
-  const {sender,receiver} = req.body;
+app.get("/getGroupParticipants/:id", (req, res) => {
+  const id = req.params.id;
+  console.log(id);
+  let department = "";
+  const groupRef = db.collection("groups");
+  let participants = [];
+  groupRef.get().then((snapshot) => {
+    snapshot.forEach((doc) => {
+      if (doc.data().id == id) {
+        console.log("found dept", doc.data().department);
+        department = doc.data().department;
+        const userRef = db.collection("faculty");
+        userRef
+          .where("department", "==", department)
+          .get()
+          .then((snapshot) => {
+            snapshot.forEach((doc) => {
+              let data = doc.data();
+              data={...data,uid:doc.id}
+              participants.push(data);
+            });
+            return res.send({ participants: participants, status: 200 });
+          });
+      }
+    });
+  }).catch((err)=>{
+    res.status(404).send({message:"Error getting participants",status:404})
+  });
+});
 
-  const dbref = db.collection('blocked');
 
-  dbref.find({sender:sender,receiver:receiver}).toArray((err,result)=>{
-    if(err) throw err;
-    if(result.length>0){
-      return res.send({message:true,status:200});
-    }else{
-      return res.send({message:false,status:404});
-    }
-  })  
-})

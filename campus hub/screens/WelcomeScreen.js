@@ -1,11 +1,31 @@
 import { View, Text, Image, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React,{useEffect} from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { themeColors } from '../theme'
 import { useNavigation } from '@react-navigation/native'
+import {auth} from '../firebaseConfig' 
 
 export default function WelcomeScreen() {
     const navigation = useNavigation();
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+          if (user) {
+            // User is signed in.
+            console.log('User is signed in:', user);
+            navigation.navigate('Chat');
+            // You can perform actions for authenticated users here
+          } else {
+            // User is signed out.
+            console.log('User is signed out');
+            // You can perform actions for non-authenticated users here
+          }
+        });
+      
+        // Cleanup the listener when the component unmounts
+        return () => unsubscribe();
+      }, []);
+
   return (
     <SafeAreaView className="flex-1" style={{backgroundColor: themeColors.bg}}>
         <View className="flex-1 flex justify-around my-4">

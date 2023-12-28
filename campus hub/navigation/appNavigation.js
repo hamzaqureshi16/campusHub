@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native'
-import React from 'react'
+import React,{useEffect} from 'react'
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
@@ -20,14 +20,19 @@ import { TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons'; 
 import { useNavigation } from '@react-navigation/native';
 import Notifications from '../screens/Notifications';
-
-
+import { auth } from '../firebaseConfig';
+import ReadBlog from '../screens/ReadBlog';
+import GroupProfileScreen from '../screens/GroupProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
 
 export default function AppNavigation() {
   const navigation = useNavigation();
+
+  
+
+
   return (
     // <NavigationContainer>
       <Stack.Navigator initialRouteName='Welcome'
@@ -51,7 +56,7 @@ export default function AppNavigation() {
         }}
 
       >
-        <Stack.Screen name="Home" component={Chat} />
+        <Stack.Screen name="Home"  options={{ headerShown:false }} component={Chat} />
         <Stack.Screen name="Welcome" options={{ headerShown:false }} component={WelcomeScreen} />
         <Stack.Screen name="Login" options={{ headerShown:false }} component={LoginScreen} />
         <Stack.Screen name="SignUp" options={{ headerShown:false }} component={SignUpScreen} />
@@ -65,7 +70,9 @@ export default function AppNavigation() {
         <Stack.Screen name="ChatSettings" options={{ headerShown:false }} component={ChatSettingsScreen} />
         <Stack.Screen name="GroupWhatsAppChat" options={{ headerShown:false }} component={GroupWhatsAppChatScreen} />
         <Stack.Screen name="AddBlog" options={{ headerShown:false }} component={AddBlog} />
-        <Stack.Screen name="Notifications" component={Notifications} />
+        <Stack.Screen name="Notifications" options={{ headerShown:false }} component={Notifications} />
+        <Stack.Screen name="ReadBlog" options={{ headerShown:true }} component={ReadBlog} />
+        <Stack.Screen name="GroupProfile" options={{ headerShown:false }} component={GroupProfileScreen} />
       </Stack.Navigator>
     // </NavigationContainer>
   )

@@ -19,22 +19,7 @@ export default function App() {
   }
 
   useEffect(()=>{checkAsync()},[])
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        // User is signed in.
-        console.log('User is signed in:', user);
-        // You can perform actions for authenticated users here
-      } else {
-        // User is signed out.
-        console.log('User is signed out');
-        // You can perform actions for non-authenticated users here
-      }
-    });
   
-    // Cleanup the listener when the component unmounts
-    return () => unsubscribe();
-  }, []);
 
 
   return (

@@ -35,44 +35,50 @@ export default function Studen() {
     { label: "BDS", value: "BDS" },
     { label: "BSE", value: "BSE" },
   ];
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@cuitatd\.com$/;
 
   const handleSignUp = async () => {
-    createUserWithEmailAndPassword(auth, email, password).then(
-      (userCredential) => {
-        let rg = session + "-" + dpt + "-" + reg;
-        let uid = userCredential.user.uid;
-        let data = JSON.stringify({
-          email: email,
-          password: password,
-          name: name,
-          department: department,
-          rg: rg,
-          uid: uid,
-        });
-
-        let config = {
-          method: "post",
-          maxBodyLength: Infinity,
-          url: `http://${manifest.debuggerHost
-            .split(":")
-            .shift()}:3000/studentsignup`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-          data: data,
-        };
-
-        axios
-          .request(config)
-          .then((response) => {
-            console.log(JSON.stringify(response.data));
-            navigation.navigate("Home");
-          })
-          .catch((error) => {
-            console.log(error);
+    if (!emailRegex.test(email)) {
+      alert("Please enter a valid CUIT email address");
+      return;
+    } else {
+      createUserWithEmailAndPassword(auth, email, password).then(
+        (userCredential) => {
+          let rg = session + "-" + dpt + "-" + reg;
+          let uid = userCredential.user.uid;
+          let data = JSON.stringify({
+            email: email,
+            password: password,
+            name: name,
+            department: department,
+            rg: rg,
+            uid: uid,
           });
-      }
-    );
+
+          let config = {
+            method: "post",
+            maxBodyLength: Infinity,
+            url: `http://${manifest.debuggerHost
+              .split(":")
+              .shift()}:3000/studentsignup`,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            data: data,
+          };
+
+          axios
+            .request(config)
+            .then((response) => {
+              console.log(JSON.stringify(response.data));
+              navigation.navigate("Home");
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        }
+      );
+    }
   };
 
   return (
