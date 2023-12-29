@@ -183,6 +183,10 @@ const WhatsAppChatScreen = ({ route }) => {
   };
   const handleSend = async () => {
     const { toid } = route.params;
+    if(blocker !== auth.currentUser.uid && blocked){
+      alert('youve been blocked')
+      return
+    }
     if (message === "") {
       alert("please enter some message");
       return;
