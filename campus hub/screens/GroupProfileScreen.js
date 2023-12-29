@@ -14,6 +14,7 @@ import Constants from "expo-constants";
 import { ActivityIndicator } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons"; // Import icons from Expo package
+import { auth } from "../firebaseConfig";
 
 const GroupProfileScreen = ({ route }) => {
   const { grpID, name } = route.params;
@@ -22,6 +23,72 @@ const GroupProfileScreen = ({ route }) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [grpName, setGrpName] = useState(name);
+  const [role, setRole] = useState("");
+  const [blocked, setBlocked] = useState(false);
+
+  const block = async (uid) => {
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: `http://${manifest.debuggerHost.split(":").shift()}:3000/block`,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: {
+        blocker: grpID,
+        blocked: uid,
+      },
+    };
+
+    await axios
+      .request(config)
+      .then((response) => {
+        alert(response.data.message);
+        let tempPart = members;
+        tempPart.map((item) => {
+          if (item.uid === uid) {
+            item.blocked = true;
+          }
+        });
+        setMembers(tempPart);
+        setBlocked(uid);
+      })
+      .catch((error) => {
+        console.error(error);
+
+        alert("contains restricitve workds");
+      });
+  };
+
+  const getBlockedStatus = async (uid) => {
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: `http://${manifest.debuggerHost
+        .split(":")
+        .shift()}:3000/getBlockedStatus`,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: {
+        blocker: grpID,
+        blocked: uid,
+      },
+    };
+
+
+
+    await axios
+      .request(config)
+      .then((response) => {
+        return response.data.message;
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+      return false;
+  };
 
   const getMembers = async () => {
     setLoading(true);
@@ -33,16 +100,45 @@ const GroupProfileScreen = ({ route }) => {
       )
       .then((response) => {
         console.log(response.data.participants);
-        setMembers(response.data.participants);
+        let mems = response.data.participants
+
+        mems.map((item)=>{
+          console.log(getBlockedStatus(item.uid));
+          // let stat = getBlockedStatus(item.uid);
+          // console.log(stat);
+          // item.blocked = stat;
+        })
+
+
+        setMembers(mems);
         setLoading(false);
+
+
       })
       .catch((error) => {
         console.log(error);
       });
   };
 
+  const getRole = async () => {
+    await axios
+      .get(
+        `http://${manifest.debuggerHost.split(":").shift()}:3000/getRole/${
+          auth.currentUser.uid
+        }`
+      )
+      .then((res) => {
+        console.log(res.data);
+        setRole(res.data.role);
+      })
+      .catch((err) => console.log(err));
+  };
+
   useEffect(() => {
     getMembers();
+    getRole();
+
+
   }, []);
 
   return (
@@ -90,22 +186,64 @@ const GroupProfileScreen = ({ route }) => {
                 style={styles.profileImage}
               />
               <Text style={{ marginLeft: 10, fontSize: 16 }}>{item.name}</Text>
+              {(role === "faculty" && !item?.blocked) ? (
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "red",
+                    width: 150,
+                    height: 50,
+                    borderRadius: 10,
+                    alignSelf: "center",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                  onPress={() => {
+                    block(item.uid);
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "white",
+                      fontSize: 16,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Block from Group
+                  </Text>
+                </TouchableOpacity>
+              ):(
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "red",
+                    width: 150,
+                    height: 50,
+                    borderRadius: 10,
+                    alignSelf: "center",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                  onPress={() => {
+                    block(item.uid);
+                  }}
+                  disabled={true}
+                >
+                  <Text
+                    style={{
+                      color: "white",
+                      fontSize: 16,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Unblock
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         />
       </View>
-      <TouchableOpacity
-        style={{
-          backgroundColor: "red",
-          padding: 10,
-          borderRadius: 5,
-          width: 150,
-          alignSelf: "center",
-          marginBottom:10
-        }}
-      >
-        <Text style={{ color: "white", textAlign: "center" }}>Exit Group</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -204,11 +342,12 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   chatParticipantContainer: {
-    flexDirection: "row",
+    flexDirection: "column",
+    display: "flex",
     alignItems: "center",
     borderColor: "#e0e0e0",
-    padding: 10,
     width: 200,
+    padding: 20,
     borderWidth: 1,
     borderRadius: 20,
     backgroundColor: "lightgreen",

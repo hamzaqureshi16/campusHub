@@ -17,7 +17,6 @@ import Constants from "expo-constants";
 import * as DocumentPicker from "expo-document-picker";
 import { ActivityIndicator } from "react-native-paper";
 
-
 const WhatsAppChatScreen = ({ route }) => {
   const { manifest } = Constants;
   const [message, setMessage] = useState("");
@@ -59,10 +58,9 @@ const WhatsAppChatScreen = ({ route }) => {
         console.log(response.data.length);
 
         let msgs = response.data;
-        if (msgs.length === 1 && msgs[0].receiver === auth.currentUser.uid ) {
+        if (msgs.length === 1 && msgs[0].receiver === auth.currentUser.uid) {
           setIsNew(true);
-        }
-        else{
+        } else {
           setIsNew(false);
         }
 
@@ -91,17 +89,41 @@ const WhatsAppChatScreen = ({ route }) => {
       });
   };
 
+  const unblock = async () => {
+    const { toid } = route.params;
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: `http://${manifest.debuggerHost.split(":").shift()}:3000/unblock`,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: {
+        blocker: blocker,
+        blocked: toid,
+      },
+    };
 
-  const block  = async () => {
+    await axios
+      .request(config)
+      .then((response) => {
+        if (response.data.status) {
+          getBlockedStatus();
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
+  const block = async () => {
     const { toid } = route.params;
     console.log(toid);
 
     let config = {
       method: "post",
       maxBodyLength: Infinity,
-      url: `http://${manifest.debuggerHost
-        .split(":")
-        .shift()}:3000/block`,
+      url: `http://${manifest.debuggerHost.split(":").shift()}:3000/block`,
       headers: {
         "Content-Type": "application/json",
       },
@@ -120,16 +142,15 @@ const WhatsAppChatScreen = ({ route }) => {
       .catch((error) => {
         console.error(error);
 
-        alert('contains restricitve workds');
+        alert("contains restricitve workds");
       });
 
-      // getOurMessages();
-      console.log('oeoe');
-  }
+    // getOurMessages();
+    console.log("oeoe");
+  };
   useEffect(() => {
     getOurMessages();
-    getBlockedStatus()
-    
+    getBlockedStatus();
   }, []);
 
   const getBlockedStatus = async () => {
@@ -153,21 +174,18 @@ const WhatsAppChatScreen = ({ route }) => {
     await axios
       .request(config)
       .then((response) => {
-        console.log(response.data);
         setBlocked(response.data.message);
         setBlocker(response.data.blocker);
       })
       .catch((error) => {
         console.error(error);
       });
-  }
+  };
   const handleSend = async () => {
     const { toid } = route.params;
-    if(message  === ''){
-      alert(
-      'please enter some message'
-      );
-      return 
+    if (message === "") {
+      alert("please enter some message");
+      return;
     }
     console.log(toid);
     setSending(true);
@@ -188,7 +206,7 @@ const WhatsAppChatScreen = ({ route }) => {
       },
     };
     setMessage("");
-    setFile(null)
+    setFile(null);
 
     await axios
       .request(config)
@@ -198,11 +216,11 @@ const WhatsAppChatScreen = ({ route }) => {
       })
       .catch((error) => {
         setSending(false);
-        if(error.message === 'Request failed with status code 400'){
-          alert('Your message contains restricted words');
+        if (error.message === "Request failed with status code 400") {
+          alert("Your message contains restricted words");
         }
       });
-      console.log('this is here');
+    console.log("this is here");
   };
 
   const handleFileSelect = () => {
@@ -258,6 +276,26 @@ const WhatsAppChatScreen = ({ route }) => {
           </View>
         )}
       />
+      {blocked && blocker === auth.currentUser.uid && (
+        <TouchableOpacity
+          onPress={unblock}
+          style={[
+            styles.sendIconContainer,
+            {
+              backgroundColor: "red",
+              width: 100,
+              height: 40,
+              borderRadius: 10,
+              alignSelf: "center",
+              justifyContent: "center",
+              alignItems: "center",
+              marginBottom: 10,
+            },
+          ]}
+        >
+          <Text style={styles.chatText}>Unblock</Text>
+        </TouchableOpacity>
+      )}
       {isNew && !blocked && (
         <TouchableOpacity
           onPress={() => block()}
@@ -315,8 +353,7 @@ const WhatsAppChatScreen = ({ route }) => {
             color="#25d366"
             style={styles.sendIconContainer}
           />
-        )
-        }
+        )}
 
         <TouchableOpacity
           onPress={() => handleSend()}

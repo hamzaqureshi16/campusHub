@@ -22,7 +22,7 @@ import Constants from "expo-constants";
 
 export default function SignUpScreen() {
   const { manifest } = Constants;
-  const navigation = useNavigation();
+const navigation = useNavigation();
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");

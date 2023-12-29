@@ -54,8 +54,7 @@ const BottomNavigationBar = ({ activeTab }) => {
           navigate.navigate('Welcome')
         }}
       >
-        {/* <FontAwesome name="cog" size={24} color={activeTab === 'Settings' ? '#25d366' : 'gray'} /> */}
-        <Text style={activeTab === 'Settings' ? styles.activeTabText : styles.tabText}>Logout</Text>
+        <Text style={activeTab === 'Logout' ? styles.activeTabText : styles.tabText}>Logout</Text>
       </TouchableOpacity>
     </View>
   );

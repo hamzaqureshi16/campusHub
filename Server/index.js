@@ -682,6 +682,27 @@ app.post("/block", (req, res) => {
     });
 });
 
+app.post("/unblock", (req, res) => {
+  const { blocker, blocked } = req.body;
+
+  const dbref = db.collection("blocked");
+  dbref
+    .where("blocker", "==", blocker)
+    .where("blocked", "==", blocked)
+    .get()
+    .then((snapshot) => {
+      snapshot.forEach((doc) => {
+        doc.ref.delete();
+      });
+      return res.send({ message: "User unblocked successfully", status: 200 });
+    })
+    .catch((err) => {
+      console.log("Error getting documents", err);
+      return res.send({ message: "erro", status: "400" });
+    });
+
+});
+
 app.post("/getBlockedStatus", (req, res) => {
   const { blocker, blocked } = req.body;
 
@@ -728,28 +749,31 @@ app.get("/getGroupParticipants/:id", (req, res) => {
   let department = "";
   const groupRef = db.collection("groups");
   let participants = [];
-  groupRef.get().then((snapshot) => {
-    snapshot.forEach((doc) => {
-      if (doc.data().id == id) {
-        console.log("found dept", doc.data().department);
-        department = doc.data().department;
-        const userRef = db.collection("faculty");
-        userRef
-          .where("department", "==", department)
-          .get()
-          .then((snapshot) => {
-            snapshot.forEach((doc) => {
-              let data = doc.data();
-              data={...data,uid:doc.id}
-              participants.push(data);
+  groupRef
+    .get()
+    .then((snapshot) => {
+      snapshot.forEach((doc) => {
+        if (doc.data().id == id) {
+          console.log("found dept", doc.data().department);
+          department = doc.data().department;
+          const userRef = db.collection("faculty");
+          userRef
+            .where("department", "==", department)
+            .get()
+            .then((snapshot) => {
+              snapshot.forEach((doc) => {
+                let data = doc.data();
+                data = { ...data, uid: doc.id };
+                participants.push(data);
+              });
+              return res.send({ participants: participants, status: 200 });
             });
-            return res.send({ participants: participants, status: 200 });
-          });
-      }
+        }
+      });
+    })
+    .catch((err) => {
+      res
+        .status(404)
+        .send({ message: "Error getting participants", status: 404 });
     });
-  }).catch((err)=>{
-    res.status(404).send({message:"Error getting participants",status:404})
-  });
 });
-
-

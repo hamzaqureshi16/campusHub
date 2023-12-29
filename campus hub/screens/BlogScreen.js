@@ -28,6 +28,7 @@ const BlogScreen = () => {
       )
       .then((res) => {
         console.log(res.data);
+        setRole(res.data.role)
       })
       .catch((err) => console.log(err));
   }
