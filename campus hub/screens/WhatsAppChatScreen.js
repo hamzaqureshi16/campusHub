@@ -138,6 +138,7 @@ const WhatsAppChatScreen = ({ route }) => {
       .then((response) => {
         setMessage("");
         setIsNew(false);
+        getBlockedStatus();
       })
       .catch((error) => {
         console.error(error);
