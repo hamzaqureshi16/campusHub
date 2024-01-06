@@ -24,7 +24,7 @@ const GroupProfileScreen = ({ route }) => {
   const [loading, setLoading] = useState(false);
   const [grpName, setGrpName] = useState(name);
   const [role, setRole] = useState("");
-  const [blocked, setBlocked] = useState(false);
+  const [blocked, setBlocked] = useState([]);
 
   const block = async (uid) => {
     let config = {
@@ -43,15 +43,7 @@ const GroupProfileScreen = ({ route }) => {
     await axios
       .request(config)
       .then((response) => {
-        alert(response.data.message);
-        let tempPart = members;
-        tempPart.map((item) => {
-          if (item.uid === uid) {
-            item.blocked = true;
-          }
-        });
-        setMembers(tempPart);
-        setBlocked(uid);
+        console.log(response.data)
       })
       .catch((error) => {
         console.error(error);
@@ -60,34 +52,23 @@ const GroupProfileScreen = ({ route }) => {
       });
   };
 
-  const getBlockedStatus = async (uid) => {
-    let config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: `http://${manifest.debuggerHost
-        .split(":")
-        .shift()}:3000/getBlockedStatus`,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: {
-        blocker: grpID,
-        blocked: uid,
-      },
-    };
-
-
-
+  const getBlockedStatus = async () => {
     await axios
-      .request(config)
-      .then((response) => {
-        return response.data.message;
+      .get(
+        `http://${manifest.debuggerHost
+          .split(":")
+          .shift()}:3000/getBlockedFromGroup/${grpID}`
+      )
+      .then((res) => {
+        let unique = [...new Set(res.data.blocked)];
+        console.log(
+          unique.filter((item) => item === auth.currentUser.uid).length
+        );
+        setBlocked(unique);
       })
-      .catch((error) => {
-        console.error(error);
+      .catch((err) => {
+        console.log(err);
       });
-
-      return false;
   };
 
   const getMembers = async () => {
@@ -99,21 +80,10 @@ const GroupProfileScreen = ({ route }) => {
           .shift()}:3000/getGroupParticipants/${grpID}`
       )
       .then((response) => {
-        console.log(response.data.participants);
-        let mems = response.data.participants
-
-        mems.map((item)=>{
-          console.log(getBlockedStatus(item.uid));
-          // let stat = getBlockedStatus(item.uid);
-          // console.log(stat);
-          // item.blocked = stat;
-        })
-
+        let mems = response.data.participants;
 
         setMembers(mems);
         setLoading(false);
-
-
       })
       .catch((error) => {
         console.log(error);
@@ -134,11 +104,24 @@ const GroupProfileScreen = ({ route }) => {
       .catch((err) => console.log(err));
   };
 
+  const unblock = async (unblock) => {
+    await axios
+      .post(`http://${manifest.debuggerHost.split(":").shift()}:3000/unblock`, {
+        blocker: grpID,
+        blocked: unblock,
+      })
+      .then((res) => {
+        getBlockedStatus();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
   useEffect(() => {
     getMembers();
     getRole();
-
-
+    getBlockedStatus();
   }, []);
 
   return (
@@ -175,73 +158,81 @@ const GroupProfileScreen = ({ route }) => {
         <FlatList
           data={members}
           keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <View style={styles.chatParticipantContainer}>
-              <Image
-                source={{
-                  uri: `http://${manifest.debuggerHost
-                    .split(":")
-                    .shift()}:3000/${item.profilePicture}`,
-                }}
-                style={styles.profileImage}
-              />
-              <Text style={{ marginLeft: 10, fontSize: 16 }}>{item.name}</Text>
-              {(role === "faculty" && !item?.blocked) ? (
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: "red",
-                    width: 150,
-                    height: 50,
-                    borderRadius: 10,
-                    alignSelf: "center",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginBottom: 10,
-                  }}
-                  onPress={() => {
-                    block(item.uid);
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "white",
-                      fontSize: 16,
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Block from Group
-                  </Text>
-                </TouchableOpacity>
-              ):(
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: "red",
-                    width: 150,
-                    height: 50,
-                    borderRadius: 10,
-                    alignSelf: "center",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginBottom: 10,
-                  }}
-                  onPress={() => {
-                    block(item.uid);
-                  }}
-                  disabled={true}
-                >
-                  <Text
-                    style={{
-                      color: "white",
-                      fontSize: 16,
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Unblock
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
+          renderItem={({ item }) => {
+            return (
+              <>
+                {item.uid != auth.currentUser.uid && (
+                  <View style={styles.chatParticipantContainer}>
+                    <Image
+                      source={{
+                        uri: `http://${manifest.debuggerHost
+                          .split(":")
+                          .shift()}:3000/${item.profilePicture}`,
+                      }}
+                      style={styles.profileImage}
+                    />
+                    <Text style={{ marginLeft: 10, fontSize: 16 }}>
+                      {item.name}
+                    </Text>
+                    {role === "faculty" &&
+                    blocked.filter((blk) => blk === item.uid).length === 0 ? (
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "red",
+                          width: 150,
+                          height: 50,
+                          borderRadius: 10,
+                          alignSelf: "center",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginBottom: 10,
+                        }}
+                        onPress={() => {
+                          block(item.uid);
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 16,
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Block from Group
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "red",
+                          width: 150,
+                          height: 50,
+                          borderRadius: 10,
+                          alignSelf: "center",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginBottom: 10,
+                        }}
+                        onPress={() => {
+                          unblock(item.uid);
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 16,
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Unblock
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              </>
+            );
+          }}
         />
       </View>
     </View>

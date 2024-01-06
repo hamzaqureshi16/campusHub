@@ -31,6 +31,7 @@ const navigation = useNavigation();
   const emailRegex = /^[a-zA-Z0-9._%+-]+@cuitatd\.com$/;
 
   const handleSignUp = async () => {
+  
     if (!emailRegex.test(email)) {
       alert("Please enter a valid CUIT email address");
       return;

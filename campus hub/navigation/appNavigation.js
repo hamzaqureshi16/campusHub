@@ -29,6 +29,7 @@ const Stack = createNativeStackNavigator();
 
 export default function AppNavigation() {
   const navigation = useNavigation();
+  useEffect(()=>{console.log(auth.currentUser)},[])
 
   
 

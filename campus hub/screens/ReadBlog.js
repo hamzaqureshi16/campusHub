@@ -28,6 +28,10 @@ const ReadBlog = ({ route }) => {
         <Text style={{ 
             fontSize:25
          }}>Title: {blog.title}</Text>
+
+<Text style={{ 
+            fontSize:25
+         }}>Content: {blog.content}</Text>
     </View>;
 };
 

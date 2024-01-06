@@ -18,9 +18,8 @@ const Notifications = () => {
           .shift()}:3000/notifications/${auth.currentUser.uid}`
       )
       .then((res) => {
-        
+        console.log(res.data);
         const uniqueReceivers = [...new Set(res.data.map((item) => item.receiver))];
-        console.log(uniqueReceivers);
         setNotifications(res.data);
       })
       .catch((err) => console.log(err));

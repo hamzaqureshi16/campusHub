@@ -27,7 +27,34 @@ const GroupWhatsAppChatScreen = ({ route }) => {
   const [to, setTo] = useState(0); // Replace with actual user data
   const [sending, setSending] = useState(false);
   const [chatData, setChatData] = useState([]);
+  const [blocked, setBlocked] = useState(false);
   const navigation = useNavigation();
+
+  const getBlockStatus = async () =>{
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: `http://${manifest.debuggerHost
+        .split(":")
+        .shift()}:3000/getBlockedStatus`,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: {
+        blocked: auth.currentUser.uid,
+        blocker: grpID,
+      },
+    };
+
+    axios
+      .request(config)
+      .then((response) => {
+        setBlocked(response.data.message);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
 
   const getOurMessages = async () => {
     let config = {
@@ -78,12 +105,18 @@ const GroupWhatsAppChatScreen = ({ route }) => {
 
   useEffect(() => {
     getOurMessages();
+    getBlockStatus();
   }, []);
 
   const handleSend = async () => {
     if (message === "") {
       alert("Please enter a message");
       return;
+    }
+    if(blocked){
+      alert('your are blocked from sending messages to this group');
+      
+      return
     }
     console.log(grpID);
     let config = {

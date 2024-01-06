@@ -175,6 +175,7 @@ const WhatsAppChatScreen = ({ route }) => {
     await axios
       .request(config)
       .then((response) => {
+        console.log('res',response.data)
         setBlocked(response.data.message);
         setBlocker(response.data.blocker);
       })
@@ -184,8 +185,10 @@ const WhatsAppChatScreen = ({ route }) => {
   };
   const handleSend = async () => {
     const { toid } = route.params;
+    
+    
     if(blocker !== auth.currentUser.uid && blocked){
-      alert('youve been blocked')
+      alert('youve been blocked by the other user')
       return
     }
     if (message === "") {
@@ -350,7 +353,7 @@ const WhatsAppChatScreen = ({ route }) => {
           value={message}
           onChangeText={setMessage}
           placeholder="Type a message..."
-          editable={!blocked || blocker !== auth.currentUser.uid}
+          // editable={!blocked || blocker === auth.currentUser.uid}
         />
         {sending && (
           <ActivityIndicator
