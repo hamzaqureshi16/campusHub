@@ -700,7 +700,6 @@ app.post("/unblock", (req, res) => {
       console.log("Error getting documents", err);
       return res.send({ message: "erro", status: "400" });
     });
-
 });
 
 app.post("/getBlockedStatus", (req, res) => {
@@ -714,9 +713,24 @@ app.post("/getBlockedStatus", (req, res) => {
     .get()
     .then((snapshot) => {
       if (snapshot.empty) {
-        console.log("No matching documents.");
-        return res.send({ message: false, status: 200 });
+        dbref
+          .where("blocker", "==", blocked)
+          .where("blocked", "==", blocker)
+          .get()
+          .then((snapshot) => {
+            if (snapshot.empty) {
+              console.log("not found");
+              return res.send({ message: false, status: 200 });
+            } else {
+              console.log("found");
+              return res.send({ message: true, blocker: blocked, status: 200 });
+            }
+          })
+          .catch((err) => {
+            console.log("Error getting documents", err);
+          });
       } else {
+        console.log("found");
         return res.send({ message: true, blocker: blocker, status: 200 });
       }
     })
@@ -775,5 +789,25 @@ app.get("/getGroupParticipants/:id", (req, res) => {
       res
         .status(404)
         .send({ message: "Error getting participants", status: 404 });
+    });
+});
+
+app.get("/getBlockedFromGroup/:id", (req, res) => {
+  const id = req.params.id;
+  const dbref = db.collection("blocked");
+  let blocked = [];
+  dbref
+    // .where("blocker", "==", id)
+    .get()
+    .then((snapshot) => {
+      snapshot.forEach((doc) => {
+        if (doc.data().blocker == id) {
+          blocked.push(doc.data().blocked);
+        }
+      });
+      return res.send({ blocked: blocked, status: 200 });
+    })
+    .catch((err) => {
+      console.log("Error getting documents", err);
     });
 });
