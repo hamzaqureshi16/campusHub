@@ -44,6 +44,7 @@ const GroupProfileScreen = ({ route }) => {
       .request(config)
       .then((response) => {
         console.log(response.data)
+        getBlockedStatus();
       })
       .catch((error) => {
         console.error(error);
@@ -201,7 +202,7 @@ const GroupProfileScreen = ({ route }) => {
                           Block from Group
                         </Text>
                       </TouchableOpacity>
-                    ) : (
+                    ) : role ==='faculty' ? (
                       <TouchableOpacity
                         style={{
                           backgroundColor: "red",
@@ -227,7 +228,7 @@ const GroupProfileScreen = ({ route }) => {
                           Unblock
                         </Text>
                       </TouchableOpacity>
-                    )}
+                    ):(<></>)}
                   </View>
                 )}
               </>
