@@ -109,12 +109,12 @@ const GroupWhatsAppChatScreen = ({ route }) => {
   }, []);
 
   const handleSend = async () => {
-    if (message === "") {
+    if (message == "") {
       alert("Please enter a message");
       return;
     }
     if(blocked){
-      alert('your are blocked from sending messages to this group');
+      alert('your have been removed from this group');
       
       return
     }

@@ -199,7 +199,7 @@ const GroupProfileScreen = ({ route }) => {
                             fontWeight: "bold",
                           }}
                         >
-                          Block from Group
+                          Remove from from Group
                         </Text>
                       </TouchableOpacity>
                     ) : role ==='faculty' ? (
@@ -225,7 +225,7 @@ const GroupProfileScreen = ({ route }) => {
                             fontWeight: "bold",
                           }}
                         >
-                          Unblock
+                          Add to group
                         </Text>
                       </TouchableOpacity>
                     ):(<></>)}
