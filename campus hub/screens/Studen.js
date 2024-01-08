@@ -38,7 +38,11 @@ export default function Studen() {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@cuitatd\.com$/;
 
   const handleSignUp = async () => {
-    if (!emailRegex.test(email)) {
+    if(parseInt(reg) > 100){
+      alert("Please enter a valid registration number");
+      return;
+    }
+    if (!emailRegex.test(email) ) {
       alert("Please enter a valid CUIT email address");
       return;
     } else {

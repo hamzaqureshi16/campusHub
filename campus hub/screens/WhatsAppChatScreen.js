@@ -191,10 +191,7 @@ const WhatsAppChatScreen = ({ route }) => {
       alert('youve been blocked by the other user')
       return
     }
-    if (message === "") {
-      alert("please enter some message");
-      return;
-    }
+    
     console.log(toid);
     setSending(true);
     let config = {
@@ -366,6 +363,7 @@ const WhatsAppChatScreen = ({ route }) => {
         <TouchableOpacity
           onPress={() => handleSend()}
           style={styles.sendIconContainer}
+          disabled={message === ""}
         >
           <FontAwesome
             name="send"

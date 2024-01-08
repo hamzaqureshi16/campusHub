@@ -109,10 +109,7 @@ const GroupWhatsAppChatScreen = ({ route }) => {
   }, []);
 
   const handleSend = async () => {
-    if (message == "") {
-      alert("Please enter a message");
-      return;
-    }
+   
     if(blocked){
       alert('your have been removed from this group');
       
@@ -269,6 +266,7 @@ const GroupWhatsAppChatScreen = ({ route }) => {
         <TouchableOpacity
           onPress={() => handleSend()}
           style={styles.sendIconContainer}
+          disabled = {(message === "")}
         >
           <FontAwesome
             name="send"
