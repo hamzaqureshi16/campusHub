@@ -41,7 +41,7 @@ export default function Studen() {
     if(parseInt(reg) > 100){
       alert("Please enter a valid registration number");
       return;
-    }
+    } 
     if (!emailRegex.test(email) ) {
       alert("Please enter a valid CUIT email address");
       return;
@@ -75,7 +75,12 @@ export default function Studen() {
             .request(config)
             .then((response) => {
               console.log(JSON.stringify(response.data));
-              navigation.navigate("Home");
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: "Home" }],
+                })
+              );
             })
             .catch((error) => {
               console.log(error);
@@ -119,7 +124,7 @@ export default function Studen() {
             <TextInput
               className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-3"
               value={name}
-              onChangeText={(text) => setName(text)}
+              onChangeText={(text) => setName(text.replace(/[0-9]/g, ''))}
               placeholder="Enter Name"
             />
             <Text className="text-gray-700 ml-4">Email Address</Text>
@@ -208,7 +213,17 @@ export default function Studen() {
               onValueChange={(value) => setDpt(value)}
               items={programList.map((program) => program)}
             />
-            <TextInput
+
+<RNPickerSelect
+              style={{
+                width: 50,
+              }}
+              onValueChange={(value) => setReg(value)}
+              items={Array.from({ length: 100 }, (_, index) => {
+                const paddedIndex = String(index + 1).padStart(3, '0');
+                return { label: `${paddedIndex}`, value: `${paddedIndex}` }})}
+            />
+            {/* <TextInput
               style={{
                 height: 40,
                 borderWidth: 1,
@@ -218,7 +233,7 @@ export default function Studen() {
               placeholder="Registration number"
               value={reg}
               onChangeText={(text) => setReg(text)}
-            />
+            /> */}
 
             <View>
               <TouchableOpacity

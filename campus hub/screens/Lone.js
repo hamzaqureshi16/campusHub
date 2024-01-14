@@ -11,6 +11,7 @@ import { firestore } from "../firebaseConfig";
 import { collection } from "firebase/firestore";
 import axios from "axios";
 import Constants from "expo-constants";
+import { CommonActions } from "@react-navigation/native";
 
 export default function Lone() {
   const navigation = useNavigation();
@@ -45,7 +46,12 @@ export default function Lone() {
           await signInWithEmailAndPassword(auth, res.data.email, password)
             .then((userCredential) => {
               console.log(userCredential.user);
-              navigation.navigate("Home");
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: "Home" }],
+                })
+              );
             })
             .catch((error) => {
               const errorCode = error.code;
@@ -150,7 +156,18 @@ export default function Lone() {
             onValueChange={(value) => setDpt(value)}
             items={programList.map((program) => program)}
           />
-          <TextInput
+          <RNPickerSelect
+            style={{
+              width: 50,
+            }}
+            onValueChange={(value) => setReg(value)}
+            items={Array.from({ length: 100 }, (_, index) => {
+              const paddedIndex = String(index + 1).padStart(3, "0");
+              return { label: `${paddedIndex}`, value: `${paddedIndex}` };
+            })}
+          />
+
+          {/* <TextInput
             className="p-4 bg-gray-100 text-gray-700 rounded-2xl"
             placeholder="reg"
             value={reg}
@@ -162,7 +179,7 @@ export default function Lone() {
               paddingHorizontal: 10,
               borderRadius: 8,
             }}
-          />
+          /> */}
           {/* </View> */}
 
           <Text className="text-gray-700 ml-4">Password</Text>

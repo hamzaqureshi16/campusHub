@@ -14,6 +14,7 @@ const ChatScreen = ({route}) => {
   const [searchText, setSearchText] = useState('');
   const navigate = useNavigation();
   const [users, setUsers] = useState([]);
+  const [tempUsers, setTempUsers] = useState([])
 
   const navigation = useNavigation();
 
@@ -24,6 +25,7 @@ const ChatScreen = ({route}) => {
     .then((response) => {
       console.log(response.data)
       setUsers(response.data)
+      setTempUsers(response.data)
     })
     .catch((error) => {
       console.log(error);
@@ -32,7 +34,22 @@ const ChatScreen = ({route}) => {
 
   }
 
- 
+
+  const onSearch = () => {
+    if(searchText===''){
+      setUsers(tempUsers)
+      return
+    }
+    //search text from users
+    console.log('searching')
+    let filteredUser = users.filter(user => user.name.toLowerCase
+    ().includes(searchText.toLowerCase()))
+    setUsers(filteredUser)
+    };
+
+  
+
+useEffect(()=>{onSearch()},[searchText]) 
 
   useEffect(() => {  
     getAllUsers()    

@@ -18,7 +18,12 @@ export default function LoginScreen() {
     await signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log(userCredential.user);
-        navigation.navigate("Home");
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: "Home" }],
+          })
+        );
       })
       .catch((error) => {
         const errorCode = error.code;

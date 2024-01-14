@@ -62,7 +62,12 @@ const navigation = useNavigation();
             .request(config)
             .then((response) => {
               console.log(response.data);
-              navigation.navigate("Home");
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: "Home" }],
+                })
+              );
             })
             .catch((error) => {
               console.log(error);
@@ -110,7 +115,7 @@ const navigation = useNavigation();
             <TextInput
               className="p-4 bg-gray-100 text-gray-700 rounded-2xl mb-3"
               value={name}
-              onChangeText={(text) => setName(text)}
+              onChangeText={(text) => setName(text.replace(/[0-9]/g, ''))}
               placeholder="Enter Name"
             />
             <Text className="text-gray-700 ml-4">Email Address</Text>
